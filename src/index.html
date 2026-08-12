@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Branding & Google Search Result (SEO) -->
+    <title>servercult - a website hosting services company</title>
+    <meta name="description" content="open source shopify, hosted on your own cloud. register domains, deploy in seconds, and find out why everyone is entering cat mode.">
+    <meta name="theme-color" content="#000"/>
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "servercult",
+      "operatingSystem": "Web",
+      "applicationCategory": "BusinessApplication",
+      "description": "open source website hosting and cloud management console.",
+      "url": "https://servercult.com",
+      "logo": "https://servercult.com/images/icon-white.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+1-305-501-0383",
+        "contactType": "customer service"
+      }
+    }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/images/icon-grey.png">
+    <link rel="icon" type="image/png" href="/images/icon-grey.png" media="(prefers-color-scheme: light)">
+    <link rel="icon" type="image/png" href="/images/icon-white.png" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="/images/icon-grey.png">
+    
+    <!-- External Scripts -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="main-app">
+    <div id="console-container">
+        <div id="header-container">
+            <div id="site-title"></div>
+            <!-- Add static buttons, initially hidden -->
+            <span id="back-button" class="back-button" style="display: none;">&lt; back</span>
+            <span id="account-button" class="account-button" style="display: none;"></span>
+        </div>
+        <div id="hosting-tagline">we host websites</div>
+        <!-- Content (landing or menu) will be loaded here -->
+        <div id="landing-view-container">
+            <div id="console-button" class="landing-option">continue</div>
+        </div>
+
+        <!-- Spotify embed is now part of the main content flow -->
+        <div id="spotify-embed-wrapper" style="display: none;">
+            <iframe id="global-spotify-embed" data-testid="embed-iframe" src="https://open.spotify.com/embed/playlist/7LDlK4VLv2RNxaQ7Z4D6qI?utm_source=generator" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+
+        <div class="footer-container">
+            <div class="legal-links">
+                <a href="https://briefchase.com" target="_blank" rel="noopener">© <span id="legal-year"></span> briefchase llc</a>&nbsp;
+                <a href="/templates/privacy.html">privacy policy</a>&nbsp;
+                <a href="/templates/tos.html">terms of service</a>&nbsp;
+                <a href="https://github.com/briefchase/hosting_service_frontend" target="_blank" rel="noopener">code</a>&nbsp;
+                <a href="https://www.instagram.com/servercult/" target="_blank" rel="noopener" aria-label="instagram">
+                    <img src="/images/instagram.svg" alt="instagram" class="social-icon">
+                </a>
+            </div>
+            <div class="support-container">
+                <div class="support-text">open 24 hours</div>
+                <div class="support-number">
+                    <span class="rainbow-text">(305) 501-0383</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pre-rendered mode toggle button -->
+        <div id="mode-toggle-container" style="display: none;">
+            <img id="mode-toggle-cat" src="/images/cat-illustration.gif" alt="enter cat mode" style="display: none; width: 70px; height: 70px; cursor: pointer;">
+            <img id="mode-toggle-serious" src="/images/briefcase.gif" alt="enter serious mode" style="display: none; width: 80px; height: 80px; cursor: pointer;">
+        </div>
+    </div>
+
+    <!-- prompt container is created dynamically by prompt.js -->
+
+    <script type="module" src="/js/main.js"></script> <!-- Link the main index script as a module -->
+
+</body>
+</html>

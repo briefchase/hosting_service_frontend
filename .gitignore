@@ -1,0 +1,9 @@
+# Generated / local
+js/config.js
+src/js/config.js
+src/js/scripts/config.js
+src/js/scripts/grapes.js
+src/js/scripts/chat.js
+src/js/scripts/editor-styles.css
+.DS_Store
+node_modules/

@@ -1,0 +1,1352 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+body.prompt-overlay-active::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 199;
+}
+
+/* Prompt overlay container - base styles */
+#prompt-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200; /* below header (300), above main content */
+    background-color: transparent;
+    display: flex;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Styles for container when hosting a regular, centered prompt */
+#prompt-container.prompt-container--regular {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto; /* Allow scroll on small viewports if content is tall */
+}
+
+/* Styles for container when hosting the subscription/checkout prompt */
+#prompt-container.prompt-container--subscription {
+    display: block;
+    overflow: hidden; /* This container does not scroll */
+    padding: 0;
+}
+
+/* WebKit: hide scrollbar while preserving scroll */
+.prompt-content-wrapper--subscription::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.prompt-content-wrapper--subscription {
+    -ms-overflow-style: none; /* IE and Edge: hide scrollbar */
+    scrollbar-width: none; /* Firefox: hide scrollbar */
+}
+
+.embedded-checkout-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+.embedded-checkout-container {
+    scrollbar-width: none;
+}
+
+/* Ensure the prompt container fills the host and is the scroller */
+/* duplicate rules removed; consolidated above */
+
+/* Remove dim backdrop for special prompts (e.g., subscription) */
+/* Disable dim pseudo-elements when both classes are on the body */
+body.prompt-no-dim.prompt-overlay-active::after {
+    display: none !important;
+    background: transparent !important;
+}
+/* Also ensure the container (if it has a backdrop) is transparent */
+.prompt-no-dim #prompt-container {
+    background: transparent !important;
+}
+
+/* Hide header elements during blocking prompts */
+.prompt-overlay-active #site-title {
+    visibility: hidden !important; /* ensure title is visually hidden */
+}
+.prompt-overlay-active #account-button {
+    visibility: hidden !important; /* override inline display toggles while preserving layout */
+}
+
+/* Preserve header height/layout when elements are hidden during prompts */
+.prompt-overlay-active #header-container {
+    min-height: var(--header-height, 56px);
+}
+
+/* --- State-based visibility and layout adjustments --- */
+
+/* Base styles for when a full-screen overlay is active (prompt or terminal) */
+body.overlay-active {
+    overflow: hidden; /* Prevent background scrolling */
+}
+
+body.overlay-active #console-container {
+    overflow: hidden !important; /* Prevent content scrolling */
+}
+
+/* Hide header elements during overlays, but preserve layout */
+body.overlay-active #site-title,
+body.overlay-active #account-button {
+    visibility: hidden !important;
+}
+
+/* Hide main content during overlays */
+body.overlay-active #menu-container,
+body.overlay-active #main-content {
+    display: none !important;
+}
+
+/* --- End State-based styles --- */
+
+
+/* Global Resets & Base Styles */
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+    margin: 0;
+    padding: 0;
+    min-height: var(--stable-vh, 100vh); /* Allow body to grow, using stable vh */
+    display: flex; /* Use flexbox for overall layout */
+    flex-direction: column; /* Stack header and content vertically */
+    position: relative; /* Needed for z-index stacking with pseudo-element */
+    background-image: var(--background-image);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed; /* Keep background fixed on scroll */
+}
+
+/* Shared Record Styles */
+.record {
+    width: fit-content;
+    padding: 2px 10px;
+    white-space: nowrap;
+    cursor: default;
+    color: #aaa; /* Dimmed by default */
+    transition: background-color 0.3s, color 0.3s;
+    box-sizing: border-box;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.record.actionable:hover,
+.record.label-record.actionable:hover {
+    background-color: white;
+    color: black !important;
+    cursor: pointer;
+}
+
+
+/* Landing Page Specific Styles (If landing.html is ever used directly) */
+.landing-page body { /* Less relevant now, but kept for potential direct use */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.landing-page #landing-content {
+    position: relative;
+}
+
+.landing-page .landing-button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.landing-page .landing-button {
+    cursor: pointer;
+    padding: 10px;
+    display: block;
+    border: 1px solid white;
+    margin-bottom: 5px;
+    min-width: 200px;
+    text-align: left;
+    transition: background-color 0.3s, color 0.3s;
+    background-color: black;
+    color: white;
+}
+
+.landing-page .landing-button:hover {
+    background-color: white;
+    color: black;
+}
+
+
+/* Main App Styles */
+#console-container {
+    flex-grow: 1; /* Allow console to fill remaining space */
+    position: relative; /* Context for absolute header */
+    display: flex;
+    flex-direction: column; /* Stack header and dynamic content */
+    align-items: center; /* Center flex children (landing/menu container) horizontally */
+    padding-top: 80px; /* Add padding to prevent content going under fixed header */
+    box-sizing: border-box;
+}
+
+/* Vertically center console content when deployment is loading */
+body.deployment-loading #console-container {
+    justify-content: center;
+}
+
+#header-container {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px 80px; /* Increased padding to keep buttons away from edge */
+    min-height: 40px; /* Adjusted min-height */
+    /* removed border-bottom: 1px solid white; */
+    position: fixed; /* Make header fixed at the top */
+    top: 0;
+    left: 0;
+    background-color: transparent; /* Let page background show through */
+    z-index: 300; /* Keep header above overlays like prompts */
+    display: flex; /* Use flex for alignment inside header */
+    align-items: center; /* Center items vertically */
+    justify-content: center; /* Center site title */
+}
+
+/* Prompt mode: hide title/account and main content */
+/* Preserve header layout while hiding content */
+body.prompt-active #site-title { visibility: hidden !important; }
+body.prompt-active #account-button { visibility: hidden !important; }
+/* Only hide content during an active prompt overlay */
+body.prompt-overlay-active #menu-container { display: none !important; }
+body.prompt-overlay-active #main-content { display: none !important; }
+/* Prevent background/body scrolling while prompt overlay is active */
+html.prompt-overlay-active,
+body.prompt-overlay-active {
+    overflow: hidden;
+}
+
+/* Ensure underlying app container does not scroll while overlay is active */
+body.prompt-overlay-active #console-container {
+    overflow: hidden !important;
+}
+
+/* Removed empty rule for #site-title; inherits layout from header flex */
+
+/* Dynamic Content Containers (Landing/Menu) */
+/* Style the containers loaded into #console-container */
+#landing-view-container,
+#menu-container { /* Apply common styles */
+    display: flex;
+    flex-direction: column;
+    /* align-items: center; Removed - Parent handles container centering */
+    justify-content: center; /* Center items vertically (optional) */
+    width: 100%; /* Default width, overridden below */
+    flex-grow: 1; /* Allow content to fill space below header */
+    padding: 20px;
+    box-sizing: border-box;
+    /* Removed align-items: center; from here */
+}
+
+/* Specific styles for landing container */
+#landing-view-container {
+    width: 220px; /* Set specific width */
+    align-items: center; /* Center ITEMS INSIDE the container */
+    /* justify-content remains center to vertically center the box */
+}
+
+/* Specific styles for menu container */
+#menu-container {
+    min-width: 220px; /* Match width */
+    width: fit-content;
+    align-items: center; /* Center ITEMS INSIDE the container */
+}
+
+/* Center Landing Buttons */
+#landing-view-container .landing-button {
+    cursor: pointer;
+    padding: 10px;
+    border: 1px solid white;
+    margin-bottom: 10px; /* Increased spacing */
+    min-width: 220px; /* Slightly wider */
+    width: fit-content;
+    text-align: center; /* Center text inside button */
+    transition: background-color 0.3s, color 0.3s;
+    background-color: black;
+    color: white;
+}
+
+#landing-view-container .landing-button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Style Landing Options as Records with Hover Effect - Updated */
+#landing-view-container .landing-option {
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    width: fit-content; /* Make width fit content */
+    text-align: center; /* Center text inside */
+    cursor: pointer; /* Keep pointer cursor as they are clickable */
+    color: white; /* Default text color */
+    background-color: transparent; /* Ensure default background is transparent */
+    border: 1px solid white;
+    transition: background-color 0.3s, color 0.3s;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+}
+
+/* Restore button-like hover */
+#landing-view-container .landing-option:hover {
+    background-color: white; /* White background on hover */
+    color: black; /* Black text on hover */
+    /* text-decoration: none; Ensure no underline */
+}
+
+/* Consistent rainbow for the membership button */
+#claim-membership-button {
+    position: relative;
+    background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+    background-size: 200% auto;
+    animation: rainbow-bg-shift 4s linear infinite;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    z-index: 1;
+    overflow: hidden;
+}
+
+#claim-membership-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+}
+
+/* Special hover for the membership button */
+#claim-membership-button:hover {
+    color: black !important;
+    border-color: white;
+}
+
+#claim-membership-button:hover::before {
+    opacity: 1; /* Fade the white solid color IN over the rainbow background */
+}
+
+@keyframes rainbow-bg-shift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: -200% 0%; }
+}
+
+/* Google Verification Notice */
+.google-verification-notice {
+    color: #888888; /* Grey color for notice */
+    font-size: 0.8em;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#spotify-embed-wrapper {
+    position: absolute;
+    display: none;
+    z-index: 15;
+    width: 288px;
+    height: 152px;
+    overflow: hidden;
+    border-radius: 12px;
+    /* top and left will be set by JavaScript */
+}
+
+/* --- Spotify Embed Override --- DO NOT REMOVE THIS */
+#spotify-embed-wrapper iframe {
+    height: 152px !important;
+}
+
+
+.footer-container {
+    position: relative;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto; /* Center the container */
+    box-sizing: border-box;
+    padding: 0 20px; /* Add padding to prevent touching edges on very small screens */
+}
+
+/* Legal Links Styling */
+.legal-links {
+    text-align: center;
+    margin-top: 20px; /* Space above the links */
+    font-size: clamp(0.6rem, 2vw, 0.8rem); /* Responsive font size */
+    margin-bottom: 18px; /* Breathing room from bottom */
+    white-space: nowrap; /* Prevent links from wrapping */
+}
+
+.support-container {
+    position: absolute;
+    top: -40px;
+    right: -10px;
+    transform: rotate(15deg);
+    font-size: 0.8em; /* Match legal text size */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.support-text {
+    margin-bottom: 2px;
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+.support-number {
+    animation: pulse-size 2s ease-in-out infinite;
+}
+
+@keyframes pulse-size {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05); /* Grow by 5% */
+    }
+}
+
+#landing-spikeball-gif {
+    animation: grow-shrink 2s ease-in-out infinite;
+}
+
+@keyframes grow-shrink {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.025);
+    }
+}
+
+.legal-links a {
+    color: #aaa; /* Dimmed color */
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.legal-links a:hover {
+    color: white; /* Brighten on hover */
+}
+
+.social-icon {
+    height: calc(1em + 5px); /* Match icon size to text, but slightly larger */
+    width: auto;
+    vertical-align: middle; /* Align icon nicely with the text */
+    filter: invert(75%) sepia(0%) saturate(7543%) hue-rotate(235deg) brightness(89%) contrast(91%); /* This approximates #aaa */
+    transition: filter 0.3s;
+}
+
+.legal-links a:hover .social-icon {
+    filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(288deg) brightness(102%) contrast(102%); /* This produces pure white */
+}
+
+
+/* Global Corner Buttons */
+.back-button,
+.account-button { /* Now target the specific elements in main app */
+    position: absolute; /* Position relative to header */
+    top: 50%; /* Align vertically */
+    transform: translateY(-50%); /* Precise vertical center */
+    z-index: 10; /* Above site title if overlapping */
+    cursor: pointer;
+    padding: 5px 10px;
+    display: inline-block;
+    transition: background-color 0.3s, color 0.3s;
+    background-color: transparent; /* Make background transparent */
+    color: white;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+    /* border: 1px solid white; removed */
+}
+
+.back-button {
+    left: 20px;
+}
+
+.account-button {
+    right: 20px;
+}
+
+.back-button:hover,
+.account-button:hover {
+    background-color: white;
+    color: black;
+}
+
+#hosting-tagline {
+    position: absolute; /* Keep absolute for JS positioning */
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    white-space: nowrap;
+    z-index: 10;
+    display: none; /* Hide by default, will be shown by JS */
+}
+
+#hosting-tagline .dud {
+    color: white;
+}
+
+
+
+
+/* Main App Menu Title Styling */
+#menu-text {
+    text-align: center;
+    margin-bottom: 15px; /* Space above menu list */
+    white-space: nowrap;
+}
+
+/* Main App Menu List Styles */
+.menu { /* Directly within menu-container */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 220px; /* Keep fixed width for the container */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items like fit-content records */
+}
+
+/* Base styles for ALL list items (buttons and records) */
+.menu li {
+    /* width: 100%; Removed - Apply only to buttons */
+    box-sizing: border-box;
+    text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+    border: none;
+    margin-bottom: 5px; /* Consistent spacing below items */
+    position: relative; /* Context for potential overflow */
+}
+
+.menu-item-container {
+    width: 100%;
+    padding: 0;
+    margin-bottom: 5px;
+}
+
+.menu-horizontal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 5px; /* Add a little space for the scrollbar */
+}
+
+/* Custom scrollbar for better aesthetics */
+.menu-horizontal-list::-webkit-scrollbar {
+    height: 4px;
+}
+
+.menu-horizontal-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.menu-horizontal-list::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 2px;
+}
+
+/* Styles specific to Buttons */
+.menu li.menu-button {
+    width: 100%; /* Make buttons take full width */
+    padding: 10px 0; /* Button vertical padding */
+    border: 1px solid white;
+    /* margin-bottom: 5px; Moved to base li */
+    cursor: pointer;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+}
+
+/* Styles specific to Records */
+.menu-horizontal-list li.label-record {
+    padding-right: 0;
+}
+
+/* Add extra space after the last record in details menus and prompts */
+.details-last-record,
+.menu li.details-last-record {
+    margin-bottom: 15px !important; /* Use important to ensure override */
+}
+
+/* Hover effect for Buttons */
+.menu li.menu-button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* Main App General Container (was .container) - Use if needed */
+.container {
+     margin: 0 auto;
+     width: fit-content;
+     /* color: black; Removed, inherits white from body */
+}
+
+/* Advanced option styling: keep red text, including hover */
+#advanced-option {
+    color: #ff2b2b;
+    border-color: #ff2b2b;
+}
+#advanced-option:hover {
+    background-color: rgba(255, 43, 43, 0.15);
+    color: #ff2b2b;
+}
+
+/* (Removed) Blood drip overlay styles */
+
+/* Submenu display is controlled by menu.js */
+/* Removed empty rule for #deploy-submenu; visibility handled by JS */
+
+/* Tooltip Styles */
+#tooltip {
+    display: none; /* Hidden by default */
+    position: absolute; /* Position near the mouse */
+    background-color: white;
+    color: black;
+    border: 1px solid black;
+    padding: 5px 8px;
+    font-size: 0.8em; /* Slightly smaller font */
+    max-width: 100px;
+    z-index: 1000; /* Ensure it's on top */
+    pointer-events: none; /* Prevent tooltip from interfering with mouse events */
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2); /* Optional: subtle shadow */
+}
+
+/* Info Mode Styles */
+.info-mode-active .menu li,
+.info-mode-active .record,
+.info-mode-active .landing-button,
+.info-mode-active .landing-option,
+.info-mode-active .back-button,
+.info-mode-active .account-button,
+.info-mode-active .prompt-option-button,
+.info-mode-active .prompt-input-text,
+.info-mode-active select {
+    transition: none !important;
+}
+
+.info-mode-active .menu li:hover,
+.info-mode-active .record.actionable:hover,
+.info-mode-active .landing-button:hover,
+.info-mode-active .landing-option:hover,
+.info-mode-active .back-button:hover,
+.info-mode-active .account-button:hover,
+.info-mode-active .prompt-option-button:hover,
+.info-mode-active .record:hover {
+    cursor: help !important;
+}
+
+#info-mode-toggle {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 999;
+    background-color: transparent;
+    user-select: none;
+    outline: none;
+}
+
+#info-mode-toggle canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+/* Only the lens canvas (bottom) gets the negative effect */
+.info-mode-active #info-mode-toggle .lens-canvas {
+    mix-blend-mode: difference;
+}
+
+.info-mode-active #info-mode-toggle {
+    /* Three.js handles active state visually */
+}
+
+.about-content {
+    margin: 2em 5em;
+}
+
+/* Utility class to hide elements */
+.hidden {
+    display: none !important;
+}
+
+#menu-status-message {
+    text-align: center;
+}
+
+/* Hide menu status message when empty */
+#menu-status-message:empty {
+    display: none;
+}
+
+/* Loading GIF styles */
+.loading-gif {
+    display: block;
+    margin: 0 auto; /* Center it horizontally */
+    width: 150px;      /* Set a reasonable width */
+    height: auto;      /* Maintain aspect ratio */
+}
+
+/* Rainbow text animation */
+.rainbow-text {
+    opacity: 0;
+    transition: opacity 0.2s ease-in;
+}
+
+.rainbow-text > span {
+    animation: rainbow-cycle 2s linear infinite;
+}
+
+@keyframes rainbow-cycle {
+    0%   { color: hsl(0, 100%, 50%); }
+    15%  { color: hsl(54, 100%, 50%); }
+    30%  { color: hsl(108, 100%, 50%); }
+    45%  { color: hsl(162, 100%, 50%); }
+    60%  { color: hsl(216, 100%, 50%); }
+    75%  { color: hsl(270, 100%, 50%); }
+    90%  { color: hsl(324, 100%, 50%); }
+    100% { color: hsl(360, 100%, 50%); }
+}
+
+@keyframes wave {
+    0%, 100% {
+        transform: translateY(-2px);
+    }
+    50% {
+        transform: translateY(2px);
+    }
+}
+
+/* Mockup pulse animation */
+@keyframes mockupPulse {
+    0%, 100% {
+        transform: rotate(15deg) scale(0.95);
+    }
+    50% {
+        transform: rotate(15deg) scale(1.05);
+    }
+}
+
+#mode-toggle-container {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    z-index: 25;
+    cursor: pointer;
+    transform: rotate(-15deg);
+    /* Center the image inside */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Disable the blue tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+}
+
+#mode-toggle-gif {
+    /* Allow the image to shrink if needed, but not grow beyond container */
+    max-width: 100%;
+    max-height: 100%;
+}
+
+
+/* Alternative approach - separate transform and animation */
+#landing-mockup-img {
+    animation: mockupPulse 2s ease-in-out infinite;
+}
+
+/* Add other styles for your application below */
+
+/* --- Prompt Styles --- */
+
+.prompt-group {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 15px;
+    margin-top: 0;
+    position: relative;
+    width: fit-content;
+    align-self: center;
+    box-sizing: border-box;
+}
+
+.prompt-group-label {
+    position: absolute;
+    top: -10px;
+    left: 15px;
+    background-color: black;
+    padding: 0 5px;
+    font-size: 0.7em;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: lowercase;
+}
+
+/* Ensure equal spacing by removing trailing row margins within groups */
+.prompt-group .prompt-form-row:last-child {
+    margin-bottom: 0;
+}
+
+.prompt-image {
+    width: 300px;
+    height: auto;
+    margin-bottom: 1em;
+}
+
+body.prompt-overlay-active {
+    overflow: hidden;
+}
+
+.prompt-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    background-color: black;
+    border: 1px solid white;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.prompt-content-wrapper--regular {
+    max-width: 400px;
+    width: 100%;
+    height: auto;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.prompt-content-wrapper--subscription {
+    /* Most styles are applied inline from prompt.js for this variant */
+    position: relative;
+    top: var(--header-height, 56px);
+    height: calc(100vh - var(--header-height, 56px) - 20px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0 20px 20px 20px;
+    width: auto;
+    border: none;
+    padding: 20px;
+}
+
+@media (max-width: 420px) {
+    .prompt-content-wrapper--subscription {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+.prompt-text {
+    width: 100%; /* Ensure the element takes full width to allow centering */
+    margin-bottom: 10px; /* Space between prompt text and input/options */
+    text-align: center;
+}
+
+.prompt-input-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    gap: 10px; /* Add space between input and right-side buttons */
+}
+
+/* Variant: stack the button below the input and center it */
+.prompt-input-container.prompt-input-container--stacked {
+    flex-direction: column;
+    align-items: center;
+}
+
+.prompt-input-text {
+    width: 100%;
+    flex-grow: 1;
+    background-color: black;
+    color: white;
+    border: 1px solid white;
+    padding: 8px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.prompt-input-text:focus {
+    outline: none;
+    border-color: #a0a0a0;
+}
+
+.prompt-input-text.prompt-input-available {
+    border-color: #4CAF50; /* Green */
+}
+
+.prompt-input-text.prompt-input-unavailable {
+    border-color: #F44336; /* Red */
+}
+
+/* Container for elements to the right of an input (price, button) */
+.prompt-input-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prompt-input-right.prompt-input-right--stacked {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px; /* space between input and button */
+}
+
+.prompt-price {
+    color: #4CAF50; /* Green */
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.prompt-button,
+.prompt-option-button {
+    background-color: black;
+    color: white;
+    border: 1px solid white;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.3s, color 0.3s;
+    white-space: nowrap;
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10+ */
+    user-select: none; /* Standard syntax */
+}
+
+.prompt-button:hover,
+.prompt-option-button:hover {
+    background-color: white;
+    color: black;
+}
+
+.prompt-option-button--wrap {
+    white-space: normal !important;
+    line-height: 1.4;
+    padding: 12px 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.prompt-options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prompt-options-container--full-width {
+    width: 100%;
+}
+
+/* Sync menu spacing hack */
+.prompt-sync-menu .prompt-options-container {
+    gap: 0;
+}
+
+.prompt-sync-menu .prompt-options-container > * {
+    margin-top: 15px;
+}
+
+/* Billing select spacing */
+.prompt-billing-select .prompt-text {
+    margin-bottom: 25px;
+}
+
+.prompt-billing-select .details-last-record {
+    margin-bottom: 5px !important;
+}
+
+.prompt-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.prompt-form-item {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.prompt-form-item label {
+    margin-bottom: 5px;
+    text-align: left;
+}
+
+.prompt-form-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 10px;
+    align-items: flex-end; /* Align inputs/labels to bottom */
+}
+
+.prompt-form-row .prompt-form-item {
+    flex: 1 1 0; /* Divide space equally by default */
+    min-width: 0; /* Allow shrinking below content size */
+    margin-bottom: 0;
+}
+
+/* If an item has an explicit width, don't let it grow/shrink equally */
+.prompt-form-row .prompt-form-item:has(input[style*="width"]),
+.prompt-form-row .prompt-form-item:has(select[style*="width"]),
+.prompt-form-row .prompt-form-item:has(.prompt-tab-value) {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 480px) {
+    .prompt-form-row {
+        flex-direction: column;
+    }
+}
+
+.prompt-form select {
+    width: 100%;
+    background-color: black;
+    color: white;
+    border: 1px solid white;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white' width='18px' height='18px'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    box-sizing: border-box;
+}
+
+.prompt-form select:hover {
+    background-color: white;
+    color: black;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' width='18px' height='18px'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+}
+
+/* Switcher Styles */
+.prompt-switcher .prompt-form-row {
+    gap: 0;
+    margin-bottom: -1px; /* Overlap the code box border */
+    position: relative;
+    z-index: 2;
+    justify-content: flex-start; /* Ensure left alignment */
+    padding: 0; /* Remove padding to make tabs flush with box */
+    align-items: flex-start; /* Justify everything at the top */
+}
+
+.prompt-switcher .prompt-form-item {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin-bottom: 0 !important; /* Remove the 10px gap to fuse tab with box */
+}
+
+.prompt-switcher .prompt-form-item.prompt-tab-item--right {
+    margin-left: auto !important;
+}
+
+.prompt-switcher .prompt-form-item label {
+    margin-bottom: 0 !important; /* Remove the 5px label margin to fuse tab with box */
+}
+
+.prompt-tab-label,
+.prompt-tab-button {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s, color 0.2s, background-color 0.2s;
+    text-transform: lowercase;
+    display: inline-flex;
+    align-items: flex-start; /* Align text to top so padding-top controls alignment */
+    padding: 2px 6px 5px 6px; /* 2px top, 5px bottom for tabs (3px difference) */
+    margin-bottom: 0;
+    font-size: 0.7em;
+    line-height: 1; /* Reset line-height to 1 for more predictable vertical centering */
+    border: 1px solid white; /* Set border to white */
+    box-sizing: border-box;
+    font-family: inherit;
+    background: none;
+    color: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.prompt-tab-label {
+    border-bottom: none;
+    height: auto;
+    border-color: transparent; /* Transparent by default, white when active/hover */
+}
+
+.prompt-tab-button {
+    background-color: #0c0c0c;
+    border-color: white; /* Set border to white */
+    border-radius: 0; /* Undo rounded corners */
+    opacity: 1;
+    color: white;
+    margin-left: 2px;
+    height: auto;
+    padding-bottom: 2px; /* 2px top (inherited), 2px bottom = perfectly centered */
+}
+
+.prompt-tab-label.static {
+    cursor: default;
+    opacity: 1;
+    font-weight: 500;
+}
+
+.prompt-tab-label.active,
+.prompt-tab-label:not(.static):hover,
+.prompt-tab-button:hover {
+    opacity: 1;
+    color: white;
+}
+
+.prompt-tab-label.active {
+    background-color: #0c0c0c;
+    border-color: white; /* Match box border visibility */
+    border-radius: 0; /* Undo rounded corners */
+}
+
+.prompt-tab-button:hover {
+    background-color: #222;
+    border-color: white;
+}
+
+.prompt-switcher {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent expansion from internal elements */
+    align-self: stretch; /* Take up all width in centered parents */
+}
+
+.prompt-code-box {
+    background-color: #0c0c0c;
+    color: #eee;
+    padding: 15px;
+    margin-top: 0; /* Sit flush against the tabs */
+    border: 1px solid white; /* Set border to white */
+    border-radius: 0; /* Undo rounded corners */
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+    font-size: 0.9em;
+    line-height: 1.4;
+    overflow-x: hidden; /* Strictly cut off text */
+    position: relative;
+    white-space: pre; /* No wrapping */
+    word-break: normal;
+    min-height: 50px;
+    z-index: 1;
+    width: 0; /* Force it to ignore content width */
+    min-width: 100%; /* Force it to fill parent */
+    box-sizing: border-box;
+}
+
+.prompt-code-copy {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: transparent;
+    border: 1px solid white; /* Set border to white */
+    color: #888;
+    padding: 2px 6px;
+    font-size: 0.7em;
+    font-family: inherit; /* Ensure same font as tabs */
+    cursor: pointer;
+    border-radius: 0; /* Undo rounded corners */
+    text-transform: lowercase;
+}
+
+.prompt-code-copy:hover {
+    border-color: #666;
+    color: #fff;
+    background: #222;
+}
+
+/* Embedded checkout should fill available height inside the prompt */
+.embedded-checkout-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    min-height: 60vh;
+    flex: 0 0 auto;
+    overflow: visible; /* Let #prompt-container be the scroller */
+}
+
+/* Terminal Styles */
+.terminal-container {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-family: inherit;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Xterm overrides to match site aesthetic */
+.xterm {
+    padding: 0;
+}
+
+.xterm-viewport {
+    background-color: transparent !important;
+}
+
+.xterm-screen {
+    background-color: transparent !important;
+}
+
+.xterm .xterm-cursor-block {
+    background-color: white;
+    mix-blend-mode: difference;
+}
+
+/* Hide the vertical scrollbar of xterm */
+.xterm-viewport::-webkit-scrollbar {
+    display: none;
+}
+
+.xterm-viewport {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Terminal/Editor view: constrain the content container, NOT the console wrapper */
+body.terminal-view-active .terminal-container,
+body.editor-view-active .terminal-container {
+    position: fixed;
+    top: var(--header-height, 56px);
+    bottom: var(--header-height, 56px);
+    left: 20px;
+    right: 20px;
+    width: auto;
+    height: auto;
+    z-index: 10; /* Keep behind header (300) and prompts (200) */
+}
+
+/* Reset console-container in overlay modes to avoid interference */
+body.terminal-view-active #console-container,
+body.editor-view-active #console-container {
+    padding: 0;
+    margin: 0;
+    display: block; /* Remove flex to avoid layout shifts */
+}
+
+@property --waver-x-val {
+    syntax: '<length>';
+    initial-value: 0px;
+    inherits: false;
+}
+
+@property --waver-y-val {
+    syntax: '<length>';
+    initial-value: 0px;
+    inherits: false;
+}
+
+@property --waver-rotate-val {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes waver-x {
+    0%, 100% { --waver-x-val: 0px; }
+    50% { --waver-x-val: var(--waver-x, -5px); }
+}
+
+@keyframes waver-y {
+    0%, 100% { --waver-y-val: 0px; }
+    50% { --waver-y-val: var(--waver-y, -5px); }
+}
+
+@keyframes waver-rotate {
+    0%, 100% { --waver-rotate-val: calc(-1 * var(--waver-rotate-intensity, 2deg)); }
+    50% { --waver-rotate-val: var(--waver-rotate-intensity, 2deg); }
+}
+
+.waver {
+    animation-name: waver;
+    animation-duration: var(--waver-duration);
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-delay: var(--waver-delay);
+}
+
+@keyframes waver {
+    0%, 100% {
+        transform: translate(0, 0) rotate(var(--waver-rotate, 0deg));
+    }
+    50% {
+        transform: translate(var(--waver-x, 0px), var(--waver-y, -5px)) rotate(var(--waver-rotate, 0deg));
+    }
+}
+
+/* --- Tutorial Text Styles --- */
+.tutorial-container {
+    position: absolute;
+    z-index: 1001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.tutorial-container.visible {
+    opacity: 0.6;
+}
+
+.tutorial-text {
+    background-color: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: inherit;
+    white-space: nowrap;
+    border: 1px solid white;
+}
+
+/* --- Editor Loading Dimming --- */
+#gjs.dimmed {
+    opacity: 0.3;
+    filter: grayscale(0.8);
+    pointer-events: none;
+    transition: opacity 0.5s ease, filter 0.5s ease;
+}
+
